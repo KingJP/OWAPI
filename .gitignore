@@ -75,4 +75,7 @@ target/
 aeiou.py
 .idea/
 
+# OWAPI
 rates.yml
+config.yml
+venv/
