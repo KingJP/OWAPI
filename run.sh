@@ -8,11 +8,6 @@ cd /opt/OWAPI
 python3.5 -m venv ./venv
 
 source ./venv/bin/activate
-# pip install wheel
-# pip install uvloop
-# pip install -r requirements.txt
-
-# PYTHONPATH=. asphalt run -l uvloop config.yml
-PYTHONPATH=. asphalt run config.yml
+PYTHONPATH=. asphalt run -l uvloop config.yml
 
 exit 0
