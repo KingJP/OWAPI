@@ -20,12 +20,13 @@ from werkzeug.exceptions import HTTPException, NotFound, InternalServerError
 from owapi import util
 
 B_BASE_URL = "https://playoverwatch.com/en-us/"
-B_PAGE_URL = B_BASE_URL + "career/{platform}{region}/{btag}"
+B_PAGE_URL = B_BASE_URL + "career/{platform}/{btag}"
 B_HEROES_URL = B_BASE_URL + "heroes"
 B_HERO_URL = B_HEROES_URL + "/{hero}"
 
 # The currently available specific regions.
-AVAILABLE_REGIONS = ["/eu", "/us", "/kr"]
+# AVAILABLE_REGIONS = ["/eu", "/us", "/kr"]
+AVAILABLE_REGIONS = ["/eu"]
 
 logger = logging.getLogger("OWAPI")
 
@@ -80,8 +81,7 @@ async def get_user_page(ctx: HTTPRequestContext, battletag: str, platform: str =
     """
     if platform != "pc":
         region = ""
-    built_url = B_PAGE_URL.format(
-        region=region, btag=battletag.replace("#", "-"), platform=platform)
+    built_url = B_PAGE_URL.format(btag=battletag.replace("#", "-"), platform=platform)
     page_body = await get_page_body(ctx, built_url, cache_time=cache_time, cache_404=cache_404)
 
     if not page_body:
