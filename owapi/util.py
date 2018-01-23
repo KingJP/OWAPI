@@ -125,7 +125,6 @@ def try_extract(value):
         val = matched.groups()[0]
         val = float(val)
         val = (val / 60 / 60)
-
         return val
 
     matched = PERCENT_REGEX.match(value)
@@ -133,7 +132,6 @@ def try_extract(value):
         val = matched.groups()[0]
         val = float(val)
         val = (val / 100)
-
         return val
 
     # Check if there's an ':' in it.
@@ -167,3 +165,9 @@ def sanitize_string(string):
     removed_nonalphanumeric = re.sub(r'\W', '', space_converted)
     underscore_normalized = re.sub(r'_{2,}', '_', removed_nonalphanumeric)
     return underscore_normalized.replace("soldier_76", "soldier76")  # backwards compatability
+
+def correct_plural_name(name: str, value):
+    if value == 1:
+        return name[:name.find('count')] + name[name.find('_one_') + 5:name.find('_other_')] + name[name.rfind('_'):]
+    else:
+        return name[:name.find('count')] + name[name.find('_other_') + 7:]

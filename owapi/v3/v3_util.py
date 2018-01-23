@@ -37,7 +37,6 @@ for key, val in ratelimits.items():
 # Deref as we don't use it anymore
 del ratelimits
 
-
 def check_default_useragents(useragent: str):
     """
     Checks if the user agent matches a disallowed one.

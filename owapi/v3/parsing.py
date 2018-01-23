@@ -220,13 +220,20 @@ def bl_parse_stats(parsed, mode="quickplay"):
             nvl = util.try_extract(value)
 
             if 'average' in name.lower():
-                average_stats[name.replace("_average", "_avg")] = nvl
+                name = name.replace("_average", "_avg")
+                into = average_stats
             elif '_avg_per_10_min' in name.lower():
                 # 2017-08-03 - calculate rolling averages.
                 name = name.lower().replace("_avg_per_10_min", "")
-                rolling_average_stats[name] = nvl
+                into = rolling_average_stats
             else:
-                game_stats[name] = nvl
+                into = game_stats
+
+            # Correct Blizzard Singular Plural Bug
+            if '_plural_' in name:
+                name = util.correct_plural_name(name, nvl)
+
+            into[name] = nvl
 
     # Manually add the KPD.
     try:
@@ -358,6 +365,7 @@ def bl_parse_hero_data(parsed: etree._Element, mode="quickplay"):
             hbtitle = stat_groups.find(".//span[@class='stat-title']").text
         except AttributeError:
             hbtitle = stat_groups.find(".//h5[@class='stat-title']").text
+
         if hbtitle == "Hero Specific":
             subbox_offset = 1
             hero_specific_box = stat_groups[0]
@@ -367,14 +375,20 @@ def bl_parse_hero_data(parsed: etree._Element, mode="quickplay"):
                 name, value = util.sanitize_string(subval[0].text), subval[1].text
 
                 # Put averages into average_stats
-                if "average" in name:
+                if "average" in name.lower():
                     into = _average_stats
-                elif '_avg_per_10_min' in name.lower():
+                elif "_avg_per_10_min" in name.lower():
                     name = name.lower().replace("_avg_per_10_min", "")
                     into = _rolling_avgs
                 else:
                     into = _t_d
+
                 nvl = util.try_extract(value)
+
+                # Correct Blizzard Singular Plural Bug
+                if '_plural_' in name:
+                    name = util.correct_plural_name(name, nvl)
+
                 into[name] = nvl
 
         n_dict["hero_stats"] = _t_d
@@ -392,6 +406,11 @@ def bl_parse_hero_data(parsed: etree._Element, mode="quickplay"):
                 else:
                     into = _t_d
                 nvl = util.try_extract(value)
+
+                # Correct Blizzard Singular Plural Bug
+                if '_plural_' in name:
+                    name = util.correct_plural_name(name, nvl)
+
                 into[name] = nvl
 
         n_dict["general_stats"] = _t_d
