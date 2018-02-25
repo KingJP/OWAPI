@@ -167,7 +167,12 @@ def sanitize_string(string):
     return underscore_normalized.replace("soldier_76", "soldier76")  # backwards compatability
 
 def correct_plural_name(name: str, value):
+    one = name[name.find('_one_') + 5:name.find('_other_')]
+    other = name[name.find('_other_') + 7:name.rfind(one) + len(one) + 1]
+
     if value == 1:
-        return name[:name.find('count')] + name[name.find('_one_') + 5:name.find('_other_')] + name[name.rfind('_'):]
-    else:
-        return name[:name.find('count')] + name[name.find('_other_') + 7:]
+        return name[:name.find('count_')] + one + name[name.find(other) + len(other):]
+    
+    return name[:name.find('count_')] + other + name[name.find(other) + len(other):]
+
+    # return "name:" + name + " one: " + one + " other: " + other
