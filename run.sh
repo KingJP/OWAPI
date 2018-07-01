@@ -5,9 +5,7 @@ export LANG=C.UTF-8
 
 cd /opt/OWAPI
 
-python3.5 -m venv ./venv
-
-source ./venv/bin/activate
-PYTHONPATH=. asphalt run -l uvloop config.yml
+# PYTHONPATH=. asphalt run -l uvloop config.yml
+PYTHONPATH=. pipenv run asphalt run config.yml
 
 exit 0
