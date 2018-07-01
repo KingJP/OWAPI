@@ -79,3 +79,4 @@ aeiou.py
 rates.yml
 config.yml
 venv/
+Pipfile.lock
