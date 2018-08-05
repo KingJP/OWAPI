@@ -16,6 +16,8 @@ asyncio-extras = "<=1.4.0,>=1.3.0"
 unidecode = "==0.04.19"
 kyoukai = {git = "https://github.com/SuNDwarf/Kyoukai.git"}
 uvloop = ">=0.4.10"
+yarl = "<1.2"
+
 
 [dev-packages]
 

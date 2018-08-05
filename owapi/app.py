@@ -25,7 +25,8 @@ from owapi.v3 import api_v3
 
 logging.basicConfig(filename='/dev/null', level=logging.INFO)
 
-formatter = logging.Formatter('%(asctime)s - [%(levelname)s] %(name)s -> %(message)s')
+formatter = logging.Formatter(
+    '%(asctime)s - [%(levelname)s] %(name)s -> %(message)s')
 root = logging.getLogger()
 root.handlers = []
 
@@ -62,8 +63,8 @@ async def handle_httpexception(self, ctx: HTTPRequestContext, exception: HTTPExc
     if environ is None:
         environ = ctx.environ
 
-    cbl = lambda environ: Response("Internal server error during processing. Report this.",
-                                   status=500)
+    def cbl(environ): return Response("Internal server error during processing. Report this.",
+                                      status=500)
 
     error_handler = bp.get_errorhandler(exception)
     if not error_handler:
@@ -80,7 +81,8 @@ async def handle_httpexception(self, ctx: HTTPRequestContext, exception: HTTPExc
         try:
             res = await error_handler.invoke(ctx, args=(exception,))
             # hacky way of unifying everything
-            cbl = lambda environ: res
+
+            def cbl(environ): return res
         except HTTPException as e:
             # why tho?
             logger.warning("Error handler function raised another error, using the "
@@ -117,12 +119,15 @@ class APIComponent(ContainerComponent):
     """
 
     def __init__(self, components, use_redis=True, do_profiling=False, disable_ratelimits=False,
-                 cache_time: int = None):
+                 cache_time: int = None, login=None):
         super().__init__(components)
         app.config["owapi_use_redis"] = use_redis
         app.config["owapi_do_profiling"] = do_profiling
         app.config["owapi_disable_ratelimits"] = disable_ratelimits
         app.config["owapi_cache_time"] = cache_time
+        app.config["owapi_login_enabled"] = login["enabled"]
+        app.config["owapi_login_username"] = login["username"]
+        app.config["owapi_login_password"] = login["password"]
 
     async def start(self, ctx):
         self.add_component('kyoukai', KyoukaiComponent, ip="127.0.0.1", port=4444,
@@ -133,7 +138,28 @@ class APIComponent(ContainerComponent):
             from asphalt.redis.component import RedisComponent
             self.add_component('redis', RedisComponent)
         else:
-            logger.warning('redis is disabled by config, rate limiting and caching not available')
+            logger.warning(
+                'redis is disabled by config, rate limiting and caching not available')
+
+        if app.config["owapi_login_enabled"]:
+            logger.info("Login enabled. Logging in!")
+            jsessionid = ''
+            webid = ''
+            async with ctx.session.get('https://us.battle.net/login/en/') as resp:
+                jsessionid = resp.cookies['JSESSIONID']
+                webid = resp.cookies['web.id']
+                logger.info(jsessionid.value)
+                logger.info(webid.value)
+            headers = {'Content-Type': 'application/json',
+                       'Accept': 'application/json',
+                       'Accept-Language': 'de-de',
+                       'X-Requested-With': 'XMLHttpRequest'
+                       }
+            async with ctx.session.post('https://us.battle.net/login/srp?csrfToken=true', json={"inputs": [{"input_id": "account_name", "value": "battlenet@pylypiw.com"}]}, headers=headers) as resp:
+                logger.info(resp.content_type)
+                logger.info(resp.raw_headers)
+                logger.info(str(await resp.json()))
+
         await super().start(ctx)
 
         logger.info("Started OWAPI server.")
@@ -144,7 +170,8 @@ app = Kyoukai("owapi")
 
 @app.route("/")
 async def root(ctx: HTTPRequestContext):
-    raise RequestRedirect("https://github.com/SunDwarf/OWAPI/blob/master/api.md")
+    raise RequestRedirect(
+        "https://github.com/SunDwarf/OWAPI/blob/master/api.md")
 
 
 @app.root.errorhandler(500)
@@ -184,7 +211,8 @@ async def stop_profiling(ctx: HTTPRequestContext, response: Response):
         ps.print_stats("owapi")
         # strip useless part of path infos and print with logger
         logger.info(s.getvalue().replace(
-            os.path.split(os.path.dirname(os.path.realpath(__file__)))[0] + "/", ""
+            os.path.split(os.path.dirname(os.path.realpath(__file__)))[
+                0] + "/", ""
         ))
     return response
 
@@ -206,7 +234,8 @@ async def jsonify(ctx, response: Response):
     if not any(response.response.values()):
         status_code = 404
     if ctx.request.args.get("format", "json") in ["json_pretty", "pretty"]:
-        d = json.dumps(response.response, sort_keys=True, indent=4, separators=(',', ': '))
+        d = json.dumps(response.response, sort_keys=True,
+                       indent=4, separators=(',', ': '))
     else:
         d = json.dumps(response.response)
     response.set_data(d)

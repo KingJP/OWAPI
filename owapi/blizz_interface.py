@@ -46,8 +46,7 @@ async def get_page_body(ctx: HTTPRequestContext, url: str, cache_time=300, cache
                 return None
             return (await req.read()).decode()
 
-    result = await util.with_cache(ctx, _real_get_body, url, expires=cache_time,
-                                   cache_404=cache_404)
+    result = await util.with_cache(ctx, _real_get_body, url, expires=cache_time, cache_404=cache_404)
     return result
 
 
@@ -81,7 +80,8 @@ async def get_user_page(ctx: HTTPRequestContext, battletag: str, platform: str =
     """
     if platform != "pc":
         region = ""
-    built_url = B_PAGE_URL.format(btag=battletag.replace("#", "-"), platform=platform)
+    built_url = B_PAGE_URL.format(
+        btag=battletag.replace("#", "-"), platform=platform)
     page_body = await get_page_body(ctx, built_url, cache_time=cache_time, cache_404=cache_404)
 
     if not page_body:
@@ -93,7 +93,8 @@ async def get_user_page(ctx: HTTPRequestContext, battletag: str, platform: str =
     parsed = await loop.run_in_executor(None, parse_partial)
 
     # sanity check
-    node = parsed.findall(".//section[@class='u-nav-offset']//h1[@class='u-align-center']")
+    node = parsed.findall(
+        ".//section[@class='u-nav-offset']//h1[@class='u-align-center']")
     for nodes in node:
         if nodes.text.strip() == "Profile Not Found":
             return None
@@ -109,7 +110,8 @@ async def fetch_all_user_pages(ctx: HTTPRequestContext, battletag: str, *,
     Returns a dictionary in the format of `{region: etree._Element | None}`.
     """
     if platform != "pc":
-        coro = get_user_page(ctx, battletag, region="", platform=platform, cache_404=True)
+        coro = get_user_page(ctx, battletag, region="",
+                             platform=platform, cache_404=True)
         result = await coro
         if isinstance(result, etree._Element):
             return {"any": result,
@@ -121,7 +123,8 @@ async def fetch_all_user_pages(ctx: HTTPRequestContext, battletag: str, *,
     futures = []
     for region in AVAILABLE_REGIONS:
         # Add the get_user_page coroutine.
-        coro = get_user_page(ctx, battletag, region=region, platform=platform, cache_404=True)
+        coro = get_user_page(ctx, battletag, region=region,
+                             platform=platform, cache_404=True)
         futures.append(coro)
 
     # Gather all the futures to download paralellely.
@@ -137,7 +140,8 @@ async def fetch_all_user_pages(ctx: HTTPRequestContext, battletag: str, *,
             d[region] = result
         elif isinstance(result, Exception):
             logger.error("Failed to fetch user page!\n{}".format(
-                ''.join(traceback.format_exception(type(result), result, result.__traceback__))
+                ''.join(traceback.format_exception(
+                    type(result), result, result.__traceback__))
             ))
             error = result
             d[region] = None

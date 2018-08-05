@@ -98,15 +98,15 @@ async def get_stats(ctx: HTTPRequestContext, battletag: str):
             continue
 
         status = result.xpath(".//p[@class='masthead-permission-level-text']")[0].text
-        if status == "Private Profile":
-            return {"error": "Private"}, 403
+        # if status == "Private Profile":
+        #     return {"error": "Private"}, 403
 
         d = {
             "stats": {},
         }
 
-        d["stats"]["quickplay"] = parsing.bl_parse_stats(result)
-        d["stats"]["competitive"] = parsing.bl_parse_stats(result, mode="competitive")
+        d["stats"]["quickplay"] = parsing.bl_parse_stats(result, status=status)
+        d["stats"]["competitive"] = parsing.bl_parse_stats(result, mode="competitive", status=status)
 
         built_dict[region] = d
 

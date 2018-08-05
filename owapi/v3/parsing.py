@@ -47,7 +47,7 @@ tier_data_img_src = {
 }
 
 
-def bl_parse_stats(parsed, mode="quickplay"):
+def bl_parse_stats(parsed, mode="quickplay", status=None):
     # Just a quick FYI
     # If future me or future anyone else is looking at this, I do not how this code works.
     # I'm really really hoping it doesn't break.
@@ -66,6 +66,15 @@ def bl_parse_stats(parsed, mode="quickplay"):
     built_dict = {"game_stats": [], "overall_stats": {}, "average_stats": []}
 
     # Shortcut location for player level etc
+    if status:
+        hasrank = parsed.xpath('//*[@id="overview-section"]/div/div/div/div/div[2]/div/div[3]/div')
+        if hasrank:
+            comprank = int(hasrank[0].text)
+        else:
+            comprank = None
+        built_dict["overall_stats"]["comprank"] = comprank
+        return built_dict
+
     mast_head = parsed.xpath(".//div[@class='masthead-player']")[0]
 
     # Get the prestige.
@@ -93,6 +102,38 @@ def bl_parse_stats(parsed, mode="quickplay"):
     level = int(prestige.findall(".//div")[0].text)
     built_dict["overall_stats"]["level"] = level
 
+    # Get and parse out endorsement level.
+    endorsement = mast_head.xpath(".//div[@class='endorsement-level']")[0]
+    built_dict["overall_stats"]["endorsement_level"] = int(endorsement.findall(".//div[@class='u-center']")[0].text)
+
+    # Get endorsement circle.
+    endorsement_icon_inner = mast_head.xpath(".//div[@class='endorsement-level']/div[@class='EndorsementIcon']/div[@class='EndorsementIcon-inner']")[0]
+
+    # Get individual endorsement segments.
+    try:
+        endorsement_shotcaller_image = endorsement_icon_inner.findall(".//svg[@class='EndorsementIcon-border EndorsementIcon-border--shotcaller']")[0]
+        endorsement_shotcaller_level = int(endorsement_shotcaller_image.get('data-value'))
+    except:
+        endorsement_shotcaller_level = 0
+
+    try:
+        endorsement_teammate_image = endorsement_icon_inner.findall(".//svg[@class='EndorsementIcon-border EndorsementIcon-border--teammate']")[0]
+        endorsement_teammate_level = int(endorsement_teammate_image.get('data-value'))
+    except:
+        endorsement_teammate_level = 0
+
+    try:
+        endorsement_sportsmanship_image = endorsement_icon_inner.findall(".//svg[@class='EndorsementIcon-border EndorsementIcon-border--sportsmanship']")[0]
+        endorsement_sportsmanship_level = int(endorsement_sportsmanship_image.get('data-value'))
+    except:
+        endorsement_sportsmanship_level = 0    
+
+    # Parse out endorsement segements.
+    built_dict["overall_stats"]["endorsement_shotcaller"] = endorsement_shotcaller_level
+    built_dict["overall_stats"]["endorsement_teammate"] = endorsement_teammate_level
+    built_dict["overall_stats"]["endorsement_sportsmanship"] = endorsement_sportsmanship_level
+
+    # Get comp rank.
     try:
         tier = mast_head.xpath(".//div[@class='competitive-rank']/img")[0]
         img_src = [x for x in tier.values() if 'rank-icons' in x][0]
