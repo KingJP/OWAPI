@@ -33,7 +33,8 @@ hero_data_div_ids = {
     "orisa": "0x02E000000000013E",
     "doomfist": "0x02E000000000012F",
     "moira": "0x02E00000000001A2",
-    "brigitte": "0x02E0000000000195"
+    "brigitte": "0x02E0000000000195",
+    "wrecking_ball": "0x02E00000000001CA"
 }
 
 tier_data_img_src = {
@@ -66,7 +67,7 @@ def bl_parse_stats(parsed, mode="quickplay", status=None):
     built_dict = {"game_stats": [], "overall_stats": {}, "average_stats": []}
 
     # Shortcut location for player level etc
-    if status:
+    if not status or status.lower() != "public profile":
         hasrank = parsed.xpath('//*[@id="overview-section"]/div/div/div/div/div[2]/div/div[3]/div')
         if hasrank:
             comprank = int(hasrank[0].text)
@@ -112,19 +113,19 @@ def bl_parse_stats(parsed, mode="quickplay", status=None):
     # Get individual endorsement segments.
     try:
         endorsement_shotcaller_image = endorsement_icon_inner.findall(".//svg[@class='EndorsementIcon-border EndorsementIcon-border--shotcaller']")[0]
-        endorsement_shotcaller_level = int(endorsement_shotcaller_image.get('data-value'))
+        endorsement_shotcaller_level = endorsement_shotcaller_image.get('data-value')
     except:
         endorsement_shotcaller_level = 0
 
     try:
         endorsement_teammate_image = endorsement_icon_inner.findall(".//svg[@class='EndorsementIcon-border EndorsementIcon-border--teammate']")[0]
-        endorsement_teammate_level = int(endorsement_teammate_image.get('data-value'))
+        endorsement_teammate_level = endorsement_teammate_image.get('data-value')
     except:
         endorsement_teammate_level = 0
 
     try:
         endorsement_sportsmanship_image = endorsement_icon_inner.findall(".//svg[@class='EndorsementIcon-border EndorsementIcon-border--sportsmanship']")[0]
-        endorsement_sportsmanship_level = int(endorsement_sportsmanship_image.get('data-value'))
+        endorsement_sportsmanship_level = endorsement_sportsmanship_image.get('data-value')
     except:
         endorsement_sportsmanship_level = 0    
 
