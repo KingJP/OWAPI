@@ -190,10 +190,10 @@ def bl_parse_stats(parsed, mode="quickplay", status=None):
 
     # Highlight specific stat groups.
     try:
-        game_box = stat_groups[5]
+        game_box = stat_groups[3]
     except IndexError:
         try:
-            game_box = stat_groups[4]
+            game_box = stat_groups[2] # I guess use 2?
         except IndexError:
             # edge cases...
             # we can't really extract any more stats
@@ -215,10 +215,9 @@ def bl_parse_stats(parsed, mode="quickplay", status=None):
 
     if mode == "competitive":
         try:
-            misc_box = stat_groups[7]
-            losses = int(misc_box.xpath(".//text()[. = 'Games Lost']/../..")[0][1].text
+            losses = int(game_box.xpath(".//text()[. = 'Games Lost']/../..")[0][1].text
                          .replace(",", ""))
-            ties = int(misc_box.xpath(".//text()[. = 'Games Tied']/../..")[0][1].text
+            ties = int(game_box.xpath(".//text()[. = 'Games Tied']/../..")[0][1].text
                        .replace(",", ""))
         except IndexError:
             # Sometimes the losses and ties don't exist.
@@ -347,7 +346,7 @@ def bl_parse_all_heroes(parsed, mode="quickplay"):
         _root = parsed
 
     _hero_info = _root.findall(".//div[@data-group-id='comparisons']")[0]
-    hero_info = _hero_info.findall(".//div[@class='bar-text']")
+    hero_info = _hero_info.findall(".//div[@class='ProgressBar-textWrapper']")
 
     # Loop over each one, extracting the name and hours counted.
     percent_per_second = None
