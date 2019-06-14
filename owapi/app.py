@@ -39,14 +39,6 @@ root.addHandler(consoleHandler)
 logger = logging.getLogger("OWAPI")
 
 
-# Fucking aiohttp
-
-class AiohttpHackyClientRequest(aiohttp.ClientRequest):
-    def __init__(self, *args, **kwargs):
-        kwargs["proxy_from_env"] = True
-        super().__init__(*args, **kwargs)
-
-
 # here's some more hotpatches, this api is a massive piece of garbage
 async def handle_httpexception(self, ctx: HTTPRequestContext, exception: HTTPException,
                                environ: dict = None) -> Response:
@@ -134,8 +126,7 @@ class APIComponent(ContainerComponent):
     async def start(self, ctx):
         self.add_component('kyoukai', KyoukaiComponent, ip="127.0.0.1", port=4444,
                            app="app:app", template_renderer=None)
-        ctx.session = ClientSession(headers={"User-Agent": "owapi scraper/1.0.1"},
-                                    request_class=AiohttpHackyClientRequest)
+        ctx.session = ClientSession(headers={"User-Agent": "owapi scraper/1.0.1"})
         if app.config["owapi_use_redis"]:
             from asphalt.redis.component import RedisComponent
             self.add_component('redis', RedisComponent)
@@ -246,7 +237,7 @@ async def jsonify(ctx, response: Response):
     # 261
     response.headers["Cache-Control"] = "public, max-age=300"
     expires = (datetime.datetime.utcnow() + datetime.timedelta(seconds=300))\
-        .astimezone(datetime.timezone.utc)
+        .replace(tzinfo=datetime.timezone.utc)
     response.headers["Expires"] = format_datetime(expires, usegmt=True)
     response.status_code = status_code
     return response
