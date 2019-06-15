@@ -466,7 +466,7 @@ def bl_parse_hero_data(parsed: etree._Element, mode="quickplay"):
         for idx, sg in enumerate(stat_groups):
             stat_group_hero_specific = stat_groups[idx].find('.//*[@class="stat-title"]').text
 
-            if stat_group_hero_specific == "Hero Specific":
+            if stat_group_hero_specific.lower() == "hero specific":
                 try:
                     hero_specific_box = stat_groups[idx]
                     trs = hero_specific_box.findall(".//tbody/tr")
@@ -476,11 +476,9 @@ def bl_parse_hero_data(parsed: etree._Element, mode="quickplay"):
                         name, value = util.sanitize_string(subval[0].text), subval[1].text
 
                         # Put averages into average_stats
-                        if "average" in name:
-                            into = _average_stats
-                        elif '_avg_per_10_min' in name.lower():
-                            name = name.lower().replace("_avg_per_10_min", "")
+                        if '_avg_per_10_min' in name.lower():
                             into = _rolling_avgs
+                            name = name.lower().replace("_avg_per_10_min", "")
                         else:
                             into = _t_d
                         nvl = util.try_extract(value)
@@ -490,26 +488,30 @@ def bl_parse_hero_data(parsed: etree._Element, mode="quickplay"):
                     pass
 
         n_dict["hero_stats"] = _t_d
-
         _t_d = {}
+        
         for subbox in stat_groups[subbox_offset:]:
             trs = subbox.findall(".//tbody/tr")
             # Update the dict with [0]: [1]
             for subval in trs:
                 name, value = util.sanitize_string(subval[0].text), subval[1].text
-                # Put averages into average_stats
-                if "_avg_" in name:
+                
+                if "_avg_per_10_min" in name:
                     into = _rolling_avgs
                     name = name.replace("_avg_per_10_min", "")
+                elif name in n_dict["hero_stats"]:
+                    into = None
                 else:
                     into = _t_d
+                    
                 nvl = util.try_extract(value)
 
                 # Correct Blizzard Singular Plural Bug
                 if '_plural_' in name:
                     name = util.correct_plural_name(name, nvl)
 
-                into[name] = nvl
+                if into != None:
+                    into[name] = nvl
 
         n_dict["general_stats"] = _t_d
         n_dict["average_stats"] = _average_stats
