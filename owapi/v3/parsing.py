@@ -463,30 +463,31 @@ def bl_parse_hero_data(parsed: etree._Element, mode="quickplay"):
                 # Unable to parse stat boxes. This is likely due to 0 playtime on a hero, so there are no stats
                 pass
 
-        if hbtitle == "Hero Specific":
-            subbox_offset = 1
-            hero_specific_box = stat_groups[0]
-            trs = hero_specific_box.findall(".//tbody/tr")
-            # Update the dict with [0]: [1]
-            for subval in trs:
-                name, value = util.sanitize_string(subval[0].text), subval[1].text
+        for idx, sg in enumerate(stat_groups):
+            stat_group_hero_specific = stat_groups[idx].find('.//*[@class="stat-title"]').text
 
-                # Put averages into average_stats
-                if "average" in name.lower():
-                    into = _average_stats
-                elif "_avg_per_10_min" in name.lower():
-                    name = name.lower().replace("_avg_per_10_min", "")
-                    into = _rolling_avgs
-                else:
-                    into = _t_d
+            if stat_group_hero_specific == "Hero Specific":
+                try:
+                    hero_specific_box = stat_groups[idx]
+                    trs = hero_specific_box.findall(".//tbody/tr")
 
-                nvl = util.try_extract(value)
+                    # Update the dict with [0]: [1]
+                    for subval in trs:
+                        name, value = util.sanitize_string(subval[0].text), subval[1].text
 
-                # Correct Blizzard Singular Plural Bug
-                if '_plural_' in name:
-                    name = util.correct_plural_name(name, nvl)
-
-                into[name] = nvl
+                        # Put averages into average_stats
+                        if "average" in name:
+                            into = _average_stats
+                        elif '_avg_per_10_min' in name.lower():
+                            name = name.lower().replace("_avg_per_10_min", "")
+                            into = _rolling_avgs
+                        else:
+                            into = _t_d
+                        nvl = util.try_extract(value)
+                        into[name] = nvl
+                    break
+                except IndexError:
+                    pass
 
         n_dict["hero_stats"] = _t_d
 
