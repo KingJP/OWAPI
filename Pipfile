@@ -1,23 +1,22 @@
 [[source]]
-
 url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
 
+[requires]
+python_version = '3.5'
 
 [packages]
-
 aioredis = "==1.2.0"
 aiohttp = "==3.5.4"
-asphalt = {git = "https://github.com/asphalt-framework/asphalt.git"}
+asphalt = "==4.5.0"
 asphalt-redis = "==2.1.1"
-asyncio-extras = "<=1.4.0,>=1.3.0"
-"html5-parser" = "==0.3.3"
-unidecode = "==0.04.19"
-uvloop = ">=0.4.10"
+asyncio-extras = "==1.3.2"
+html5-parser = "==0.4.7"
+unidecode = "==1.1.0"
+uvloop = "==0.12.2"
+yarl = "==1.3.0"
 kyoukai = {git = "https://github.com/Fuyukai/Kyoukai.git"}
-yarl = "<1.2"
-
 
 [dev-packages]
 
