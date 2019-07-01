@@ -73,9 +73,9 @@ def int_or_string(val: str):
 
     String is returned if we can't turn it into an int.
     """
-    new_s = val.replace(",", "")
+    val = val.replace(",", "")
     try:
-        return float(new_s)
+        return float(val)
     except ValueError:
         return val
 
