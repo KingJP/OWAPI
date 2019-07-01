@@ -166,8 +166,7 @@ def sanitize_string(string):
         r'[-\s]', '_', unidecode.unidecode(string).lower())
     removed_nonalphanumeric = re.sub(r'\W', '', space_converted)
     underscore_normalized = re.sub(r'_{2,}', '_', removed_nonalphanumeric)
-    # backwards compatability
-    return underscore_normalized.replace("soldier_76", "soldier76")
+    return underscore_normalized.replace("soldier_76", "soldier76")  # backwards compatability
 
 
 def correct_plural_name(name: str, value):
