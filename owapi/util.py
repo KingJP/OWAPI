@@ -43,8 +43,7 @@ async def with_cache(ctx: HTTPRequestContext, func, *args, expires: int = None, 
         got = await ctx.redis.get(built)
         if got and got != "None":
             if await ctx.redis.ttl(built) == -1:
-                logger.info(
-                    "Caching `{}` for `{}` seconds".format(built, expires))
+                logger.info("Caching `{}` for `{}` seconds".format(built, expires))
                 await ctx.redis.expire(built, expires)
 
             logger.info("Cache hit for `{}`".format(built))
@@ -73,9 +72,9 @@ def int_or_string(val: str):
 
     String is returned if we can't turn it into an int.
     """
-    val = val.replace(",", "")
+    new_s = val.replace(",", "")
     try:
-        return float(val)
+        return float(new_s)
     except ValueError:
         return val
 
@@ -102,6 +101,9 @@ def try_extract(value):
     if value == "--":
         return 0
 
+    if "," in value:
+        value = value.replace(",", "")
+
     get_float = int_or_string(value)
     # If it's changed, return the new int value.
     if get_float != value:
@@ -126,6 +128,7 @@ def try_extract(value):
         val = matched.groups()[0]
         val = float(val)
         val = (val / 60 / 60)
+
         return val
 
     matched = PERCENT_REGEX.match(value)
@@ -133,6 +136,7 @@ def try_extract(value):
         val = matched.groups()[0]
         val = float(val)
         val = (val / 100)
+
         return val
 
     # Check if there's an ':' in it.
@@ -162,8 +166,7 @@ def sanitize_string(string):
     """
     Convert an arbitrary string into the format used for our json keys
     """
-    space_converted = re.sub(
-        r'[-\s]', '_', unidecode.unidecode(string).lower())
+    space_converted = re.sub(r'[-\s]', '_', unidecode.unidecode(string).lower())
     removed_nonalphanumeric = re.sub(r'\W', '', space_converted)
     underscore_normalized = re.sub(r'_{2,}', '_', removed_nonalphanumeric)
     return underscore_normalized.replace("soldier_76", "soldier76")  # backwards compatability
