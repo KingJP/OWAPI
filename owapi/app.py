@@ -132,9 +132,6 @@ class APIComponent(ContainerComponent):
         app.config["owapi_do_profiling"] = do_profiling
         app.config["owapi_disable_ratelimits"] = disable_ratelimits
         app.config["owapi_cache_time"] = cache_time
-        app.config["owapi_login_enabled"] = login["enabled"]
-        app.config["owapi_login_username"] = login["username"]
-        app.config["owapi_login_password"] = login["password"]
 
     async def start(self, ctx):
         self.add_component(
@@ -163,7 +160,7 @@ app = Kyoukai("owapi")
 @app.route("/")
 async def root(ctx: HTTPRequestContext):
     raise RequestRedirect(
-        "https://github.com/SunDwarf/OWAPI/blob/master/api.md")
+        "https://github.com/Fuyukai/OWAPI/blob/master/api.md")
 
 
 @app.root.errorhandler(500)
