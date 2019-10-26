@@ -11,7 +11,6 @@ import pstats
 import traceback
 from email.utils import format_datetime
 
-import aiohttp
 from aiohttp import ClientSession
 from asphalt.core import ContainerComponent
 from kyoukai import Blueprint
@@ -25,10 +24,9 @@ from owapi.v3 import api_v3
 
 # Fuck your logging config.
 
-logging.basicConfig(filename='/dev/null', level=logging.INFO)
+logging.basicConfig(filename="/dev/null", level=logging.INFO)
 
-formatter = logging.Formatter(
-    '%(asctime)s - [%(levelname)s] %(name)s -> %(message)s')
+formatter = logging.Formatter("%(asctime)s - [%(levelname)s] %(name)s -> %(message)s")
 root = logging.getLogger()
 root.handlers = []
 
@@ -40,8 +38,9 @@ logger = logging.getLogger("OWAPI")
 
 
 # here's some more hotpatches, this api is a massive piece of garbage
-async def handle_httpexception(self, ctx: HTTPRequestContext, exception: HTTPException,
-                               environ: dict = None) -> Response:
+async def handle_httpexception(
+    self, ctx: HTTPRequestContext, exception: HTTPException, environ: dict = None
+) -> Response:
     """
     Handle a HTTP Exception.
 
@@ -57,8 +56,9 @@ async def handle_httpexception(self, ctx: HTTPRequestContext, exception: HTTPExc
     if environ is None:
         environ = ctx.environ
 
-    def cbl(environ): return Response("Internal server error during processing. Report this.",
-                                      status=500)
+    cbl = lambda environ: Response(
+        "Internal server error during processing. Report this.", status=500
+    )
 
     error_handler = bp.get_errorhandler(exception)
     if not error_handler:
@@ -79,8 +79,9 @@ async def handle_httpexception(self, ctx: HTTPRequestContext, exception: HTTPExc
             def cbl(environ): return res
         except HTTPException as e:
             # why tho?
-            logger.warning("Error handler function raised another error, using the "
-                           "response from that...")
+            logger.warning(
+                "Error handler function raised another error, using the " "response from that..."
+            )
             cbl = e.get_response
         except Exception as e:
             logger.exception("Error in error handler!")
@@ -92,17 +93,23 @@ async def handle_httpexception(self, ctx: HTTPRequestContext, exception: HTTPExc
         result = cbl(environ=environ)
     except Exception:
         # ok
-        logger.critical("Whilst handling a {}, response.get_response ({}) raised exception"
-                        .format(exception.code, cbl), exc_info=True)
-        result = Response("Critical server error. Your application is broken.",
-                          status=500)
+        logger.critical(
+            "Whilst handling a {}, response.get_response ({}) raised exception".format(
+                exception.code, cbl
+            ),
+            exc_info=True,
+        )
+        result = Response("Critical server error. Your application is broken.", status=500)
 
     if result.status_code != exception.code:
-        logger.warning("Error handler {} returned code {} when exception was code {}..."
-                       .format(error_handler.callable_repr, result.status_code,
-                               exception.code))
+        logger.warning(
+            "Error handler {} returned code {} when exception was code {}...".format(
+                error_handler.callable_repr, result.status_code, exception.code
+            )
+        )
 
     return result
+
 
 Kyoukai.handle_httpexception = handle_httpexception
 
@@ -112,8 +119,14 @@ class APIComponent(ContainerComponent):
     Container for other components. I think.
     """
 
-    def __init__(self, components, use_redis=True, do_profiling=False, disable_ratelimits=False,
-                 cache_time: int = None, login=None):
+    def __init__(
+        self,
+        components,
+        use_redis=True,
+        do_profiling=False,
+        disable_ratelimits=False,
+        cache_time: int = None,
+    ):
         super().__init__(components)
         app.config["owapi_use_redis"] = use_redis
         app.config["owapi_do_profiling"] = do_profiling
@@ -124,35 +137,21 @@ class APIComponent(ContainerComponent):
         app.config["owapi_login_password"] = login["password"]
 
     async def start(self, ctx):
-        self.add_component('kyoukai', KyoukaiComponent, ip="127.0.0.1", port=4444,
-                           app="app:app", template_renderer=None)
+        self.add_component(
+            "kyoukai",
+            KyoukaiComponent,
+            ip="127.0.0.1",
+            port=4444,
+            app="app:app",
+            template_renderer=None,
+        )
         ctx.session = ClientSession(headers={"User-Agent": "owapi scraper/1.0.1"})
         if app.config["owapi_use_redis"]:
             from asphalt.redis.component import RedisComponent
-            self.add_component('redis', RedisComponent)
+
+            self.add_component("redis", RedisComponent)
         else:
-            logger.warning(
-                'redis is disabled by config, rate limiting and caching not available')
-
-        if app.config["owapi_login_enabled"]:
-            logger.info("Login enabled. Logging in!")
-            jsessionid = ''
-            webid = ''
-            async with ctx.session.get('https://us.battle.net/login/en/') as resp:
-                jsessionid = resp.cookies['JSESSIONID']
-                webid = resp.cookies['web.id']
-                logger.info(jsessionid.value)
-                logger.info(webid.value)
-            headers = {'Content-Type': 'application/json',
-                       'Accept': 'application/json',
-                       'Accept-Language': 'de-de',
-                       'X-Requested-With': 'XMLHttpRequest'
-                       }
-            async with ctx.session.post('https://us.battle.net/login/srp?csrfToken=true', json={"inputs": [{"input_id": "account_name", "value": "battlenet@pylypiw.com"}]}, headers=headers) as resp:
-                logger.info(resp.content_type)
-                logger.info(resp.raw_headers)
-                logger.info(str(await resp.json()))
-
+            logger.warning("redis is disabled by config, rate limiting and caching not available")
         await super().start(ctx)
 
         logger.info("Started OWAPI server.")
@@ -169,11 +168,7 @@ async def root(ctx: HTTPRequestContext):
 
 @app.root.errorhandler(500)
 async def e500(ctx: HTTPRequestContext, exc: HTTPException):
-    obb = {
-        "error": 500,
-        "msg": "please report this!",
-        "exc": repr(exc.__cause__)
-    }
+    obb = {"error": 500, "msg": "please report this!", "exc": repr(exc.__cause__)}
     logger.error("Unhandled exception - Blizzard format probably changed!")
     traceback.print_exc()
     return json.dumps(obb), 500, {"Content-Type": "application/json"}
@@ -188,7 +183,7 @@ async def e404(ctx: HTTPRequestContext, exc: HTTPException):
 async def start_profiling(ctx: HTTPRequestContext):
     if ctx.app.config["owapi_do_profiling"]:
         pr = cProfile.Profile()
-        ctx.app.config['owapi_profiling_obj'] = pr
+        ctx.app.config["owapi_profiling_obj"] = pr
         pr.enable()
     return ctx
 
@@ -196,17 +191,18 @@ async def start_profiling(ctx: HTTPRequestContext):
 @app.root.after_request
 async def stop_profiling(ctx: HTTPRequestContext, response: Response):
     if ctx.app.config["owapi_do_profiling"]:
-        pr = ctx.app.config['owapi_profiling_obj']
+        pr = ctx.app.config["owapi_profiling_obj"]
         pr.disable()
         s = io.StringIO()
-        ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
+        ps = pstats.Stats(pr, stream=s).sort_stats("cumulative")
         # print into s, with regex filter
         ps.print_stats("owapi")
         # strip useless part of path infos and print with logger
-        logger.info(s.getvalue().replace(
-            os.path.split(os.path.dirname(os.path.realpath(__file__)))[
-                0] + "/", ""
-        ))
+        logger.info(
+            s.getvalue().replace(
+                os.path.split(os.path.dirname(os.path.realpath(__file__)))[0] + "/", ""
+            )
+        )
     return response
 
 
@@ -227,8 +223,7 @@ async def jsonify(ctx, response: Response):
     if not any(response.response.values()):
         status_code = 404
     if ctx.request.args.get("format", "json") in ["json_pretty", "pretty"]:
-        d = json.dumps(response.response, sort_keys=True,
-                       indent=4, separators=(',', ': '))
+        d = json.dumps(response.response, sort_keys=True, indent=4, separators=(",", ": "))
     else:
         d = json.dumps(response.response)
     response.set_data(d)
@@ -236,8 +231,9 @@ async def jsonify(ctx, response: Response):
 
     # 261
     response.headers["Cache-Control"] = "public, max-age=300"
-    expires = (datetime.datetime.utcnow() + datetime.timedelta(seconds=300))\
-        .replace(tzinfo=datetime.timezone.utc)
+    expires = (datetime.datetime.utcnow() + datetime.timedelta(seconds=300)).replace(
+        tzinfo=datetime.timezone.utc
+    )
     response.headers["Expires"] = format_datetime(expires, usegmt=True)
     response.status_code = status_code
     return response
