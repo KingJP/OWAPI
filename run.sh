@@ -7,9 +7,9 @@ export LC_ALL=C.UTF-8
 export LANG=C.UTF-8
 
 #1
-PYTHONPATH=. pipenv run asphalt run -l uvloop config.yml
+PYTHONPATH=. poetry run asphalt run -l uvloop config.yml
 
 #2
-#PYTHONPATH=. pipenv run asphalt run config.yml
+#PYTHONPATH=. poetry run asphalt run config.yml
 
 exit 0
